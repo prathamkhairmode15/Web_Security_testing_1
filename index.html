@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Web Security Findings for testfire.net">
+    <title>Security Report - testfire.net</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-primary: #3b82f6;
+            --accent-glow: rgba(59, 130, 246, 0.5);
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --success: #10b981;
+            --glass-bg: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            background: radial-gradient(circle at top right, #1e1b4b, var(--bg-dark));
+            overflow-x: hidden;
+        }
+
+        header {
+            text-align: center;
+            padding: 4rem 2rem;
+            position: relative;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            height: 100%;
+            background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+            z-index: 0;
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            position: relative;
+            z-index: 1;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem 4rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+        }
+
+        .card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 2rem;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .card:hover::after {
+            left: 200%;
+        }
+
+        .card h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card h2::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 24px;
+            background: var(--accent-primary);
+            border-radius: 4px;
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .metric:last-child {
+            border-bottom: none;
+        }
+
+        .metric-label {
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+
+        .metric-value {
+            font-weight: 600;
+            color: var(--text-primary);
+            text-align: right;
+        }
+
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .badge-danger { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
+        .badge-warning { background: rgba(245, 158, 11, 0.2); color: #fcd34d; }
+        .badge-success { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; }
+        .badge-info { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
+
+        ul.findings-list {
+            list-style: none;
+            margin-top: 1rem;
+        }
+
+        ul.findings-list li {
+            position: relative;
+            padding-left: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        ul.findings-list li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: var(--accent-primary);
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        th {
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Security Assessment</h1>
+        <p class="subtitle">Comprehensive web security findings for <strong>testfire.net</strong></p>
+    </header>
+
+    <main class="container">
+        
+        <!-- Target Overview -->
+        <div class="card">
+            <h2>Target Overview</h2>
+            <div class="metric">
+                <span class="metric-label">Domain Name</span>
+                <span class="metric-value">testfire.net</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">IP Address</span>
+                <span class="metric-value">65.61.137.117</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Hosting Provider</span>
+                <span class="metric-value">Rackspace Hosting</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">DNS Provider</span>
+                <span class="metric-value">Akamai</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Registrar</span>
+                <span class="metric-value">Amazon Registrar, Inc.</span>
+            </div>
+        </div>
+
+        <!-- Security Posture -->
+        <div class="card">
+            <h2>Security Posture</h2>
+            <div class="metric">
+                <span class="metric-label">SSL Labs Grade</span>
+                <span class="metric-value"><span class="badge badge-danger">Grade T</span></span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Protocol Support</span>
+                <span class="metric-value">TLS 1.2 <span class="badge badge-warning">TLS 1.3 Missing</span></span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Session Cookies</span>
+                <span class="metric-value"><span class="badge badge-success">Secure & HttpOnly</span></span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Certificate Trust</span>
+                <span class="metric-value"><span class="badge badge-danger">Validation Issues</span></span>
+            </div>
+        </div>
+
+        <!-- Technology Stack -->
+        <div class="card">
+            <h2>Technology Stack</h2>
+            <div class="metric">
+                <span class="metric-label">Web Server</span>
+                <span class="metric-value">Apache Tomcat</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Engine</span>
+                <span class="metric-value">Apache-Coyote/1.1</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Backend</span>
+                <span class="metric-value"><span class="badge badge-info">Java / JSP</span></span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Open Ports</span>
+                <span class="metric-value">80, 443, 8080</span>
+            </div>
+        </div>
+
+        <!-- Missing Headers -->
+        <div class="card full-width">
+            <h2>Missing Security Headers</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Header</th>
+                        <th>Impact / Purpose</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Strict-Transport-Security (HSTS)</td>
+                        <td>Enforces HTTPS usage</td>
+                        <td><span class="badge badge-danger">Missing</span></td>
+                    </tr>
+                    <tr>
+                        <td>Content-Security-Policy (CSP)</td>
+                        <td>Prevents XSS and content injection</td>
+                        <td><span class="badge badge-danger">Missing</span></td>
+                    </tr>
+                    <tr>
+                        <td>X-Frame-Options</td>
+                        <td>Mitigates clickjacking</td>
+                        <td><span class="badge badge-danger">Missing</span></td>
+                    </tr>
+                    <tr>
+                        <td>X-Content-Type-Options</td>
+                        <td>Prevents MIME-type sniffing</td>
+                        <td><span class="badge badge-danger">Missing</span></td>
+                    </tr>
+                    <tr>
+                        <td>Referrer-Policy</td>
+                        <td>Controls referrer information leakage</td>
+                        <td><span class="badge badge-danger">Missing</span></td>
+                    </tr>
+                    <tr>
+                        <td>Permissions-Policy</td>
+                        <td>Restricts browser feature access</td>
+                        <td><span class="badge badge-danger">Missing</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Key Findings -->
+        <div class="card full-width">
+            <h2>Key Vulnerabilities & Findings</h2>
+            <ul class="findings-list">
+                <li><strong>SSL/TLS Configuration:</strong> SSL Labs assigned a Grade T due to certificate trust and validation issues. Trust chain issues may affect client trust. TLS 1.3 is not supported.</li>
+                <li><strong>Missing Security Headers:</strong> Several modern HTTP security headers are absent, reducing protection against common web attacks such as clickjacking, MIME-type confusion, content injection, and information leakage.</li>
+                <li><strong>Exposed Services:</strong> Multiple web services are exposed on ports 80, 443, and 8080 (Apache Tomcat/Coyote JSP Engine 1.1).</li>
+                <li><strong>Server Fingerprint Exposure:</strong> Detailed server banners (e.g., Apache-Coyote/1.1) are exposed, aiding attackers in version-specific exploitation.</li>
+            </ul>
+        </div>
+
+    </main>
+
+</body>
+</html>
